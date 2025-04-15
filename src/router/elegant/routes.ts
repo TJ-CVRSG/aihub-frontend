@@ -40,6 +40,17 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
+    name: 'datasets',
+    path: '/datasets',
+    component: 'layout.base$view.datasets',
+    meta: {
+      title: 'datasets',
+      i18nKey: 'route.datasets',
+      icon: 'mdi:database',
+      order: 2
+    }
+  },
+  {
     name: 'home',
     path: '/home',
     component: 'layout.base$view.home',
