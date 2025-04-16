@@ -40,12 +40,12 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
-    name: 'datasets',
-    path: '/datasets',
-    component: 'layout.base$view.datasets',
+    name: 'dataset',
+    path: '/dataset',
+    component: 'layout.base$view.dataset',
     meta: {
-      title: 'datasets',
-      i18nKey: 'route.datasets',
+      title: 'dataset',
+      i18nKey: 'route.dataset',
       icon: 'mdi:database',
       order: 2
     }

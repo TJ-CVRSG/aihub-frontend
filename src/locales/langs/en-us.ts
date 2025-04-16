@@ -163,7 +163,7 @@ const local: App.I18n.Schema = {
     500: 'Server Error',
     'iframe-page': 'Iframe',
     home: 'Home',
-    datasets: 'Datasets'
+    dataset: 'Dataset'
   },
   page: {
     login: {
