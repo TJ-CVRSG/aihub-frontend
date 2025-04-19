@@ -60,8 +60,8 @@ async function handleSubmit() {
           throw new Error('zipFile must not be null');
         }
         formData.append('file', formModel.value.zipFile);
-        formData.append('desciption', formModel.value.desc || '');
-        const res = await axios.post('https://api.example.com/v1/datasets/upload', formData, {
+        formData.append('description', formModel.value.desc || '');
+        const res = await axios.post('http://127.0.0.1:8000/v1/dataset/upload/', formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.code === 200) {
@@ -140,11 +140,12 @@ async function fetchDatasets() {
   loading.value = true;
   error.value = '';
   try {
-    const token = localStorage.getItem('token');
+    // const token = localStorage.getItem('token');
+    const test_token = 'c6ccd5481e78655b26f4a2f64eb8ef905449fd9a';
     const res = await axios.post(
-      'https://api.example.com/v1/dataset/get',
+      'http://127.0.0.1:8000/v1/dataset/get/',
       { page: page.value, page_size: pageSize.value },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${test_token}` } }
     );
     if (res.data.code === 200) {
       datasets.value = res.data.datasets;
