@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { h, onMounted, ref } from 'vue';
 import {
   NButton,
   NDataTable,
@@ -13,6 +13,7 @@ import {
   useMessage
 } from 'naive-ui';
 import axios from 'axios';
+import { Icon } from '@iconify/vue';
 
 const showModal = ref(false);
 const formRef = ref();
@@ -99,7 +100,6 @@ interface RowData {
   name: string;
   task: keyof typeof taskMap;
   class_count: number;
-  classes: string;
   image_count: number;
   train_count: number;
   val_count: number;
@@ -114,7 +114,6 @@ const columns = [
   { title: '名称', key: 'name' },
   { title: '任务类型', key: 'task', render: (row: RowData) => taskMap[row.task] || row.task },
   { title: '类别数', key: 'class_count' },
-  { title: '类别', key: 'classes' },
   { title: '图片数', key: 'image_count' },
   {
     title: '训练/验证/测试',
@@ -140,12 +139,12 @@ async function fetchDatasets() {
   loading.value = true;
   error.value = '';
   try {
-    // const token = localStorage.getItem('token');
-    const test_token = 'c6ccd5481e78655b26f4a2f64eb8ef905449fd9a';
+    const token = localStorage.getItem('token');
+    // const test_token = 'c6ccd5481e78655b26f4a2f64eb8ef905449fd9a';
     const res = await axios.post(
       'http://127.0.0.1:8000/v1/dataset/get/',
       { page: page.value, page_size: pageSize.value },
-      { headers: { Authorization: `Bearer ${test_token}` } }
+      { headers: { Authorization: `Bearer ${token}` } }
     );
     if (res.data.code === 200) {
       datasets.value = res.data.datasets;
@@ -172,7 +171,13 @@ function handlePageChange(p: number) {
     <div class="upload-btn-wrapper">
       <NButton type="primary" @click="openModal">上传数据集</NButton>
     </div>
-    <NModal v-model:show="showModal" title="上传数据集" preset="dialog" @close="closeModal">
+    <NModal
+      v-model:show="showModal"
+      title="上传数据集"
+      :icon="() => h(Icon, { icon: 'mdi:database-cog', style: 'font-size: 24px' })"
+      preset="dialog"
+      @close="closeModal"
+    >
       <NForm ref="formRef" :model="formModel" label-width="80">
         <NFormItem label="数据集名称" path="name" required>
           <NInput v-model:value="formModel.name" placeholder="请输入数据集名称" />

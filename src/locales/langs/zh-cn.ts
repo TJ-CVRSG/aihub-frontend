@@ -163,7 +163,8 @@ const local: App.I18n.Schema = {
     500: '服务器错误',
     'iframe-page': '外链页面',
     home: '首页',
-    dataset: '数据集'
+    dataset: '数据集',
+    model: '模型'
   },
   page: {
     login: {

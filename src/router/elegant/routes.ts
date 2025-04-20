@@ -85,5 +85,16 @@ export const generatedRoutes: GeneratedRoute[] = [
       constant: true,
       hideInMenu: true
     }
+  },
+  {
+    name: 'model',
+    path: '/model',
+    component: 'layout.base$view.model',
+    meta: {
+      title: 'model',
+      i18nKey: 'route.model',
+      icon: 'mdi:hexagon',
+      order: 3
+    }
   }
 ];
