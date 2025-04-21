@@ -1,43 +1,45 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useAppStore } from '@/store/modules/app';
-import { useAuthStore } from '@/store/modules/auth';
-import { $t } from '@/locales';
-
-defineOptions({
-  name: 'HeaderBanner'
-});
-
-const appStore = useAppStore();
-const authStore = useAuthStore();
-
-const gap = computed(() => (appStore.isMobile ? 0 : 16));
-
-interface StatisticData {
-  id: number;
-  label: string;
-  value: string;
-}
-
-const statisticData = computed<StatisticData[]>(() => [
-  {
-    id: 0,
-    label: $t('page.home.projectCount'),
-    value: '25'
-  },
-  {
-    id: 1,
-    label: $t('page.home.todo'),
-    value: '4/16'
-  },
-  {
-    id: 2,
-    label: $t('page.home.message'),
-    value: '12'
-  }
-]);
+// import { computed } from 'vue';
+// import { useAppStore } from '@/store/modules/app';
+// import { useAuthStore } from '@/store/modules/auth';
+// import { $t } from '@/locales';
+//
+// defineOptions({
+//   name: 'HeaderBanner'
+// });
+//
+// const appStore = useAppStore();
+// const authStore = useAuthStore();
+//
+// const gap = computed(() => (appStore.isMobile ? 0 : 16));
+//
+// interface StatisticData {
+//   id: number;
+//   label: string;
+//   value: string;
+// }
+//
+// const statisticData = computed<StatisticData[]>(() => [
+//   {
+//     id: 0,
+//     label: $t('page.home.projectCount'),
+//     value: '25'
+//   },
+//   {
+//     id: 1,
+//     label: $t('page.home.todo'),
+//     value: '4/16'
+//   },
+//   {
+//     id: 2,
+//     label: $t('page.home.message'),
+//     value: '12'
+//   }
+// ]);
+//
 </script>
 
+<!--
 <template>
   <NCard :bordered="false" class="card-wrapper">
     <NGrid :x-gap="gap" :y-gap="16" responsive="screen" item-responsive>
@@ -62,5 +64,6 @@ const statisticData = computed<StatisticData[]>(() => [
     </NGrid>
   </NCard>
 </template>
+-->
 
 <style scoped></style>

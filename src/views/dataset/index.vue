@@ -135,20 +135,32 @@ function formatTime(time: Date) {
   return new Date(time).toLocaleString();
 }
 
+const todayDatasetCount = ref(0);
+const todayModelCount = ref(0);
+
+function isToday(isoString: string) {
+  if (!isoString) return false;
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
 async function fetchDatasets() {
   loading.value = true;
   error.value = '';
   try {
     const token = localStorage.getItem('token');
-    // const test_token = 'c6ccd5481e78655b26f4a2f64eb8ef905449fd9a';
     const res = await axios.post(
       'http://127.0.0.1:8000/v1/dataset/get/',
-      { page: page.value, page_size: pageSize.value },
+      { page: 1, page_size: 9999 },
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (res.data.code === 200) {
       datasets.value = res.data.datasets;
       total.value = res.data.total;
+      // 今日新增统计
+      todayDatasetCount.value = res.data.datasets.filter((item: any) => isToday(item.upload_time)).length;
     } else {
       error.value = res.data.message || '加载失败';
     }
@@ -159,7 +171,25 @@ async function fetchDatasets() {
   }
 }
 
-onMounted(fetchDatasets);
+async function fetchTodayModelCount() {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axios.post(
+      'http://127.0.0.1:8000/v1/model/get/',
+      { page: 1, page_size: 9999 },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (res.data.code === 200) {
+      todayModelCount.value = res.data.models.filter((item: any) => isToday(item.create_time)).length;
+    }
+  } catch {}
+}
+
+onMounted(() => {
+  fetchDatasets();
+  fetchTodayModelCount();
+});
+
 function handlePageChange(p: number) {
   page.value = p;
   fetchDatasets();
