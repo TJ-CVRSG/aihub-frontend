@@ -3,6 +3,7 @@ import { h, onMounted, ref } from 'vue';
 import { NButton, NDataTable, NModal, NPagination } from 'naive-ui';
 import axios from 'axios';
 import { Icon } from '@iconify/vue';
+import TrainingProgressModal from './TrainingProgressModal.vue';
 
 const selectedDataset = ref<Dataset | null>(null);
 const placeholderImg = 'src/assets/svg-icon/avatar.svg';
@@ -380,6 +381,13 @@ function toggleAdvancedParams() {
   showAdvancedParams.value = !showAdvancedParams.value;
 }
 
+// 训练进度模态框状态
+const showTrainingProgress = ref(false);
+const currentTrainingModel = ref('');
+const currentTrainingDataset = ref('');
+const taskType = ref('');
+const currentModelId = ref('');
+
 // 开始训练
 async function startTraining() {
   if (!selectedTrainDataset.value || !selectedDefaultModel.value) return;
@@ -389,6 +397,18 @@ async function startTraining() {
 
   try {
     const token = localStorage.getItem('token');
+
+    // 生成时间戳作为唯一标识
+    const timestamp = new Date().getTime();
+
+    // 生成项目名称：模型名称_数据集名称_时间戳
+    const projectName = `${selectedDefaultModel.value.name}_${selectedTrainDataset.value.name}_${timestamp}`;
+
+    // 更新训练参数中的存储路径
+    trainingDetails.value.project = 'runs/train';
+    trainingDetails.value.name = projectName;
+    trainingDetails.value.save_dir = `runs/train/${projectName}`;
+
     const res = await axios.post(
       'http://127.0.0.1:8000/v1/model/train/',
       {
@@ -400,16 +420,16 @@ async function startTraining() {
     );
 
     if (res.data.code === 200) {
-      // 训练成功
+      // 训练成功，显示训练进度窗口
+      currentTrainingModel.value = selectedDefaultModel.value.name;
+      currentTrainingDataset.value = selectedTrainDataset.value.name;
+      taskType.value = selectedTrainDataset.value.task as string;
+      currentModelId.value = selectedDefaultModel.value.id as string;
+      showTrainingProgress.value = true;
       closeTrainDialog();
-      // 刷新模型列表
-      fetchModels();
     } else if (res.data.code === 401) {
-      // Token失效，需要重新登录
       error.value = '登录已过期，请重新登录';
-      // 可以在这里添加重定向到登录页的逻辑
     } else {
-      // 其他错误
       error.value = res.data.message || '训练失败';
     }
   } catch (err) {
@@ -418,6 +438,13 @@ async function startTraining() {
   } finally {
     loading.value = false;
   }
+}
+
+// 关闭训练进度窗口
+function handleTrainingProgressClose() {
+  showTrainingProgress.value = false;
+  // 刷新模型列表
+  fetchModels();
 }
 </script>
 
@@ -1151,6 +1178,17 @@ async function startTraining() {
         </div>
       </template>
     </NModal>
+
+    <!-- 训练进度模态框 -->
+    <TrainingProgressModal
+      v-model:show="showTrainingProgress"
+      :model-name="currentTrainingModel"
+      :dataset-name="currentTrainingDataset"
+      :task-type="taskType"
+      :model-id="currentModelId"
+      @close="handleTrainingProgressClose"
+    />
+
     <NDataTable :columns="columns" :data="models" :loading="loading" />
     <NPagination
       v-model:page="page"
