@@ -1186,6 +1186,7 @@ function handleTrainingProgressClose() {
       :dataset-name="currentTrainingDataset"
       :task-type="taskType"
       :model-id="currentModelId"
+      :total-epochs="trainingDetails.epochs || 1000"
       @close="handleTrainingProgressClose"
     />
 

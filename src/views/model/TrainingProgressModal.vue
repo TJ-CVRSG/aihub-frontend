@@ -11,6 +11,7 @@ const props = defineProps<{
   datasetName: string;
   taskType: string;
   modelId: string | number;
+  totalEpochs?: number; // 添加总轮次参数，可选
 }>();
 
 // 定义emit
@@ -19,7 +20,17 @@ const emit = defineEmits(['update:show', 'close']);
 // 训练状态
 const trainingStatus = ref('准备中...');
 const currentEpoch = ref(0);
-const totalEpochs = ref(1000);
+const totalEpochs = ref(props.totalEpochs || 1000); // 使用props值，如果没有则默认1000
+
+// 监听props.totalEpochs变化
+watch(
+  () => props.totalEpochs,
+  newValue => {
+    if (newValue) {
+      totalEpochs.value = newValue;
+    }
+  }
+);
 
 // 图表引用
 const metricsChartRef = ref<HTMLElement | null>(null);
