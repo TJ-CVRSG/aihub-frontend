@@ -250,6 +250,8 @@ async function fetchDefaultModels() {
     const res = await axios.post(
       'http://127.0.0.1:8000/v1/model/getdefault/',
       {
+        page: 1,
+        page_size: 9999,
         filter: {
           task: selectedTrainDataset.value.task
         }
