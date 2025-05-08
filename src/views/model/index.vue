@@ -48,75 +48,44 @@ interface DefaultModel {
   create_time?: Date | string;
 }
 
-// 训练超参数类型
-interface TrainingHyperparameters {
+// 训练细节类型
+interface TrainingDetails {
+  // 基本参数
+  epochs: number;
+  batch: number;
+  imgsz: number;
+  optimizer: string;
+  device: string;
+  label_smoothing: number;
+  patience: number;
+  workers: number;
+
+  // 学习率参数
   lr0: number;
   lrf: number;
+  warmup_epochs: number;
+
+  // 优化器参数
   momentum: number;
   weight_decay: number;
-  warmup_epochs: number;
-  warmup_momentum: number;
-  warmup_bias_lr: number;
+
+  // 损失函数权重
   box: number;
   cls: number;
-  cls_pw: number;
-  obj: number;
-  obj_pw: number;
-  iou_t: number;
-  anchor_t: number;
-  fl_gamma: number;
+
+  // 数据增强参数
   hsv_h: number;
   hsv_s: number;
   hsv_v: number;
   degrees: number;
   translate: number;
   scale: number;
-  shear: number;
-  perspective: number;
-  flipud: number;
   fliplr: number;
   mosaic: number;
-  mixup: number;
-  copy_paste: number;
-}
 
-// 训练细节类型
-interface TrainingDetails {
-  hyp: TrainingHyperparameters;
-  epochs: number;
-  batch_size: number;
-  imgsz: number;
-  rect: boolean;
-  resume: boolean;
-  nosave: boolean;
-  noval: boolean;
-  noautoanchor: boolean;
-  noplots: boolean;
-  evolve: any;
-  bucket: string;
-  cache: any;
-  image_weights: boolean;
-  device: string;
-  multi_scale: boolean;
-  single_cls: boolean;
-  optimizer: string;
-  sync_bn: boolean;
-  workers: number;
+  // 内部使用参数，不在界面上显示
   project: string;
   name: string;
-  exist_ok: boolean;
-  quad: boolean;
-  cos_lr: boolean;
-  label_smoothing: number;
-  patience: number;
-  freeze: number[];
-  save_period: number;
-  seed: number;
-  local_rank: number;
-  entity: any;
-  upload_dataset: boolean;
-  bbox_interval: number;
-  artifact_alias: string;
   save_dir: string;
 }
 
@@ -306,70 +275,42 @@ function selectDefaultModel(model: DefaultModel) {
 
 // 训练细节
 const trainingDetails = ref<TrainingDetails>({
-  hyp: {
-    lr0: 0.01,
-    lrf: 0.01,
-    momentum: 0.937,
-    weight_decay: 0.0005,
-    warmup_epochs: 3.0,
-    warmup_momentum: 0.8,
-    warmup_bias_lr: 0.1,
-    box: 0.05,
-    cls: 0.5,
-    cls_pw: 1.0,
-    obj: 1.0,
-    obj_pw: 1.0,
-    iou_t: 0.2,
-    anchor_t: 4.0,
-    fl_gamma: 0.0,
-    hsv_h: 0.015,
-    hsv_s: 0.7,
-    hsv_v: 0.4,
-    degrees: 0.0,
-    translate: 0.1,
-    scale: 0.5,
-    shear: 0.0,
-    perspective: 0.0,
-    flipud: 0.0,
-    fliplr: 0.5,
-    mosaic: 1.0,
-    mixup: 0.0,
-    copy_paste: 0.0
-  },
+  // 基本参数
   epochs: 1000,
-  batch_size: 4,
+  batch: 4,
   imgsz: 1280,
-  rect: false,
-  resume: false,
-  nosave: false,
-  noval: false,
-  noautoanchor: false,
-  noplots: false,
-  evolve: null,
-  bucket: '',
-  cache: null,
-  image_weights: false,
-  device: '0',
-  multi_scale: false,
-  single_cls: false,
   optimizer: 'SGD',
-  sync_bn: false,
-  workers: 8,
-  project: 'runs\\train',
-  name: 'exp',
-  exist_ok: false,
-  quad: false,
-  cos_lr: false,
+  device: '0',
   label_smoothing: 0.0,
   patience: 100,
-  freeze: [0],
-  save_period: -1,
-  seed: 0,
-  local_rank: -1,
-  entity: null,
-  upload_dataset: false,
-  bbox_interval: -1,
-  artifact_alias: 'latest',
+  workers: 8,
+
+  // 学习率参数
+  lr0: 0.01,
+  lrf: 0.01,
+  warmup_epochs: 3.0,
+
+  // 优化器参数
+  momentum: 0.937,
+  weight_decay: 0.0005,
+
+  // 损失函数权重
+  box: 0.05,
+  cls: 0.5,
+
+  // 数据增强参数
+  hsv_h: 0.015,
+  hsv_s: 0.7,
+  hsv_v: 0.4,
+  degrees: 0.0,
+  translate: 0.1,
+  scale: 0.5,
+  fliplr: 0.5,
+  mosaic: 1.0,
+
+  // 内部使用参数
+  project: 'runs\\train',
+  name: 'exp',
   save_dir: 'runs\\train\\exp'
 });
 
@@ -404,10 +345,11 @@ async function startTraining() {
     // 生成项目名称：模型名称_数据集名称_时间戳
     const projectName = `${selectedDefaultModel.value.name}_${selectedTrainDataset.value.name}_${timestamp}`;
 
-    // 更新训练参数中的存储路径
-    trainingDetails.value.project = 'runs/train';
+    // 更新训练参数中的存储路径，加入任务类型
+    taskType.value = selectedTrainDataset.value.task as string;
+    trainingDetails.value.project = `runs/${taskType.value}/train`;
     trainingDetails.value.name = projectName;
-    trainingDetails.value.save_dir = `runs/train/${projectName}`;
+    trainingDetails.value.save_dir = `runs/${taskType.value}/train/${projectName}`;
 
     const res = await axios.post(
       'http://127.0.0.1:8000/v1/model/train/',
@@ -795,9 +737,9 @@ function handleTrainingProgressClose() {
                     />
                   </div>
                   <div>
-                    <div style="font-size: 13px; color: #666; margin-bottom: 4px">批次大小 (batch_size)</div>
+                    <div style="font-size: 13px; color: #666; margin-bottom: 4px">批次大小 (batch)</div>
                     <input
-                      v-model="trainingDetails.batch_size"
+                      v-model="trainingDetails.batch"
                       type="number"
                       style="width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px"
                     />
@@ -886,7 +828,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">初始学习率 (lr0)</div>
                       <input
-                        v-model="trainingDetails.hyp.lr0"
+                        v-model="trainingDetails.lr0"
                         type="number"
                         step="0.001"
                         style="
@@ -901,7 +843,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">最终学习率 (lrf)</div>
                       <input
-                        v-model="trainingDetails.hyp.lrf"
+                        v-model="trainingDetails.lrf"
                         type="number"
                         step="0.001"
                         style="
@@ -916,7 +858,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">预热轮次 (warmup_epochs)</div>
                       <input
-                        v-model="trainingDetails.hyp.warmup_epochs"
+                        v-model="trainingDetails.warmup_epochs"
                         type="number"
                         step="0.1"
                         style="
@@ -935,7 +877,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">动量 (momentum)</div>
                       <input
-                        v-model="trainingDetails.hyp.momentum"
+                        v-model="trainingDetails.momentum"
                         type="number"
                         step="0.01"
                         style="
@@ -950,7 +892,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">权重衰减 (weight_decay)</div>
                       <input
-                        v-model="trainingDetails.hyp.weight_decay"
+                        v-model="trainingDetails.weight_decay"
                         type="number"
                         step="0.0001"
                         style="
@@ -969,7 +911,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">边界框损失 (box)</div>
                       <input
-                        v-model="trainingDetails.hyp.box"
+                        v-model="trainingDetails.box"
                         type="number"
                         step="0.01"
                         style="
@@ -984,39 +926,9 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">分类损失 (cls)</div>
                       <input
-                        v-model="trainingDetails.hyp.cls"
+                        v-model="trainingDetails.cls"
                         type="number"
                         step="0.01"
-                        style="
-                          width: 100%;
-                          padding: 4px 6px;
-                          border: 1px solid #ddd;
-                          border-radius: 4px;
-                          font-size: 13px;
-                        "
-                      />
-                    </div>
-                    <div>
-                      <div style="font-size: 12px; color: #666; margin-bottom: 2px">目标损失 (obj)</div>
-                      <input
-                        v-model="trainingDetails.hyp.obj"
-                        type="number"
-                        step="0.01"
-                        style="
-                          width: 100%;
-                          padding: 4px 6px;
-                          border: 1px solid #ddd;
-                          border-radius: 4px;
-                          font-size: 13px;
-                        "
-                      />
-                    </div>
-                    <div>
-                      <div style="font-size: 12px; color: #666; margin-bottom: 2px">锚框匹配阈值 (anchor_t)</div>
-                      <input
-                        v-model="trainingDetails.hyp.anchor_t"
-                        type="number"
-                        step="0.1"
                         style="
                           width: 100%;
                           padding: 4px 6px;
@@ -1033,7 +945,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">HSV-H (hsv_h)</div>
                       <input
-                        v-model="trainingDetails.hyp.hsv_h"
+                        v-model="trainingDetails.hsv_h"
                         type="number"
                         step="0.001"
                         style="
@@ -1048,7 +960,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">HSV-S (hsv_s)</div>
                       <input
-                        v-model="trainingDetails.hyp.hsv_s"
+                        v-model="trainingDetails.hsv_s"
                         type="number"
                         step="0.01"
                         style="
@@ -1063,7 +975,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">HSV-V (hsv_v)</div>
                       <input
-                        v-model="trainingDetails.hyp.hsv_v"
+                        v-model="trainingDetails.hsv_v"
                         type="number"
                         step="0.01"
                         style="
@@ -1078,7 +990,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">旋转角度 (degrees)</div>
                       <input
-                        v-model="trainingDetails.hyp.degrees"
+                        v-model="trainingDetails.degrees"
                         type="number"
                         step="0.1"
                         style="
@@ -1093,7 +1005,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">平移 (translate)</div>
                       <input
-                        v-model="trainingDetails.hyp.translate"
+                        v-model="trainingDetails.translate"
                         type="number"
                         step="0.01"
                         style="
@@ -1108,7 +1020,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">缩放 (scale)</div>
                       <input
-                        v-model="trainingDetails.hyp.scale"
+                        v-model="trainingDetails.scale"
                         type="number"
                         step="0.01"
                         style="
@@ -1123,7 +1035,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">水平翻转 (fliplr)</div>
                       <input
-                        v-model="trainingDetails.hyp.fliplr"
+                        v-model="trainingDetails.fliplr"
                         type="number"
                         step="0.01"
                         style="
@@ -1138,7 +1050,7 @@ function handleTrainingProgressClose() {
                     <div>
                       <div style="font-size: 12px; color: #666; margin-bottom: 2px">马赛克 (mosaic)</div>
                       <input
-                        v-model="trainingDetails.hyp.mosaic"
+                        v-model="trainingDetails.mosaic"
                         type="number"
                         step="0.01"
                         style="

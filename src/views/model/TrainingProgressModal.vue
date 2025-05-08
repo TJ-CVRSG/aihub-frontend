@@ -36,13 +36,13 @@ watch(
 const metricsChartRef = ref<HTMLElement | null>(null);
 const boxLossChartRef = ref<HTMLElement | null>(null);
 const clsLossChartRef = ref<HTMLElement | null>(null);
-const objLossChartRef = ref<HTMLElement | null>(null);
+const dflLossChartRef = ref<HTMLElement | null>(null);
 
 // 图表实例
 let metricsChart: echarts.ECharts | null = null;
 let boxLossChart: echarts.ECharts | null = null;
 let clsLossChart: echarts.ECharts | null = null;
-let objLossChart: echarts.ECharts | null = null;
+let dflLossChart: echarts.ECharts | null = null;
 
 // WebSocket连接
 let ws: WebSocket | null = null;
@@ -52,10 +52,10 @@ const trainingData = ref<{
   epochs: number[];
   trainBoxLoss: number[];
   trainClsLoss: number[];
-  trainObjLoss: number[];
+  trainDflLoss: number[];
   valBoxLoss: number[];
   valClsLoss: number[];
-  valObjLoss: number[];
+  valDflLoss: number[];
   metrics: {
     precision: number[];
     recall: number[];
@@ -66,10 +66,10 @@ const trainingData = ref<{
   epochs: [],
   trainBoxLoss: [],
   trainClsLoss: [],
-  trainObjLoss: [],
+  trainDflLoss: [],
   valBoxLoss: [],
   valClsLoss: [],
-  valObjLoss: [],
+  valDflLoss: [],
   metrics: {
     precision: [],
     recall: [],
@@ -84,9 +84,9 @@ const taskMetrics = computed(() => {
     case 'detect':
       return {
         // 训练损失指标（带前缀）
-        trainLoss: ['train/box_loss', 'train/obj_loss', 'train/cls_loss'],
+        trainLoss: ['train/box_loss', 'train/dfl_loss', 'train/cls_loss'],
         // 验证损失指标（带前缀）
-        valLoss: ['val/box_loss', 'val/obj_loss', 'val/cls_loss'],
+        valLoss: ['val/box_loss', 'val/dfl_loss', 'val/cls_loss'],
         // 评估指标（带前缀）
         metrics: ['metrics/precision', 'metrics/recall', 'metrics/mAP_0.5', 'metrics/mAP_0.5:0.95'],
         // 学习率指标（带前缀）
@@ -101,15 +101,15 @@ const taskMetrics = computed(() => {
       };
     case 'segment':
       return {
-        trainLoss: ['train/box_loss', 'train/obj_loss', 'train/cls_loss', 'train/seg_loss'],
-        valLoss: ['val/box_loss', 'val/obj_loss', 'val/cls_loss', 'val/seg_loss'],
+        trainLoss: ['train/box_loss', 'train/dfl_loss', 'train/cls_loss', 'train/seg_loss'],
+        valLoss: ['val/box_loss', 'val/dfl_loss', 'val/cls_loss', 'val/seg_loss'],
         metrics: ['metrics/precision', 'metrics/recall', 'metrics/mAP_0.5', 'metrics/mAP_0.5:0.95', 'metrics/mIoU'],
         learningRates: ['x/lr0', 'x/lr1', 'x/lr2']
       };
     case 'pose':
       return {
-        trainLoss: ['train/box_loss', 'train/pose_loss', 'train/obj_loss', 'train/cls_loss'],
-        valLoss: ['val/box_loss', 'val/pose_loss', 'val/obj_loss', 'val/cls_loss'],
+        trainLoss: ['train/box_loss', 'train/pose_loss', 'train/dfl_loss', 'train/cls_loss'],
+        valLoss: ['val/box_loss', 'val/pose_loss', 'val/dfl_loss', 'val/cls_loss'],
         metrics: ['metrics/precision', 'metrics/recall', 'metrics/mAP_0.5', 'metrics/mAP_0.5:0.95'],
         learningRates: ['x/lr0', 'x/lr1', 'x/lr2']
       };
@@ -129,10 +129,10 @@ const resetTrainingData = () => {
     epochs: [],
     trainBoxLoss: [],
     trainClsLoss: [],
-    trainObjLoss: [],
+    trainDflLoss: [],
     valBoxLoss: [],
     valClsLoss: [],
-    valObjLoss: [],
+    valDflLoss: [],
     metrics: {
       precision: [],
       recall: [],
@@ -153,7 +153,7 @@ const initCharts = () => {
     metricsChartRef: Boolean(metricsChartRef.value),
     boxLossChartRef: Boolean(boxLossChartRef.value),
     clsLossChartRef: Boolean(clsLossChartRef.value),
-    objLossChartRef: Boolean(objLossChartRef.value)
+    dflLossChartRef: Boolean(dflLossChartRef.value)
   });
 
   console.log('当前任务类型:', props.taskType, '使用指标:', taskMetrics.value);
@@ -327,12 +327,12 @@ const initCharts = () => {
         trainKey: 'train/cls_loss',
         valKey: 'val/cls_loss'
       },
-      obj_loss: {
-        ref: objLossChartRef,
-        chart: objLossChart,
-        displayName: 'Object Loss',
-        trainKey: 'train/obj_loss',
-        valKey: 'val/obj_loss'
+      dfl_loss: {
+        ref: dflLossChartRef,
+        chart: dflLossChart,
+        displayName: 'DFL Loss',
+        trainKey: 'train/dfl_loss',
+        valKey: 'val/dfl_loss'
       }
     };
 
@@ -364,7 +364,7 @@ const initCharts = () => {
         // 更新全局图表引用
         if (lossType === 'box_loss') boxLossChart = newChart;
         if (lossType === 'cls_loss') clsLossChart = newChart;
-        if (lossType === 'obj_loss') objLossChart = newChart;
+        if (lossType === 'dfl_loss') dflLossChart = newChart;
 
         console.log(`${chartInfo.displayName}图表初始化完成`);
       }
@@ -426,7 +426,7 @@ const updateLossCharts = () => {
   const metrics = taskMetrics.value;
   const hasBoxLoss = metrics.trainLoss.includes('train/box_loss');
   const hasClsLoss = metrics.trainLoss.includes('train/cls_loss');
-  const hasObjLoss = metrics.trainLoss.includes('train/obj_loss');
+  const hasDflLoss = metrics.trainLoss.includes('train/dfl_loss');
 
   if (boxLossChart && hasBoxLoss) {
     boxLossChart.setOption({
@@ -458,19 +458,19 @@ const updateLossCharts = () => {
     clsLossChartRef.value.parentElement.style.display = 'none';
   }
 
-  if (objLossChart && hasObjLoss) {
-    objLossChart.setOption({
+  if (dflLossChart && hasDflLoss) {
+    dflLossChart.setOption({
       xAxis: { data: trainingData.value.epochs },
-      series: [{ data: trainingData.value.trainObjLoss }, { data: trainingData.value.valObjLoss }]
+      series: [{ data: trainingData.value.trainDflLoss }, { data: trainingData.value.valDflLoss }]
     });
-    objLossChart.resize();
+    dflLossChart.resize();
     // 显示图表
-    if (objLossChartRef.value && objLossChartRef.value.parentElement) {
-      objLossChartRef.value.parentElement.style.display = 'block';
+    if (dflLossChartRef.value && dflLossChartRef.value.parentElement) {
+      dflLossChartRef.value.parentElement.style.display = 'block';
     }
-  } else if (objLossChartRef.value && objLossChartRef.value.parentElement) {
+  } else if (dflLossChartRef.value && dflLossChartRef.value.parentElement) {
     // 隐藏图表
-    objLossChartRef.value.parentElement.style.display = 'none';
+    dflLossChartRef.value.parentElement.style.display = 'none';
   }
 };
 
@@ -483,10 +483,10 @@ const updateCharts = (data: any, _forceUpdate = false) => {
       epochs: [...trainingData.value.epochs, data.epoch],
       trainBoxLoss: [...trainingData.value.trainBoxLoss],
       trainClsLoss: [...trainingData.value.trainClsLoss],
-      trainObjLoss: [...trainingData.value.trainObjLoss],
+      trainDflLoss: [...trainingData.value.trainDflLoss],
       valBoxLoss: [...trainingData.value.valBoxLoss],
       valClsLoss: [...trainingData.value.valClsLoss],
-      valObjLoss: [...trainingData.value.valObjLoss],
+      valDflLoss: [...trainingData.value.valDflLoss],
       metrics: {
         precision: [...trainingData.value.metrics.precision],
         recall: [...trainingData.value.metrics.recall],
@@ -502,7 +502,7 @@ const updateCharts = (data: any, _forceUpdate = false) => {
     metrics.trainLoss.forEach(key => {
       if (key in data) {
         if (key === 'train/box_loss') newData.trainBoxLoss.push(data[key]);
-        if (key === 'train/obj_loss') newData.trainObjLoss.push(data[key]);
+        if (key === 'train/dfl_loss') newData.trainDflLoss.push(data[key]);
         if (key === 'train/cls_loss') newData.trainClsLoss.push(data[key]);
       }
     });
@@ -511,7 +511,7 @@ const updateCharts = (data: any, _forceUpdate = false) => {
     metrics.valLoss.forEach(key => {
       if (key in data) {
         if (key === 'val/box_loss') newData.valBoxLoss.push(data[key]);
-        if (key === 'val/obj_loss') newData.valObjLoss.push(data[key]);
+        if (key === 'val/dfl_loss') newData.valDflLoss.push(data[key]);
         if (key === 'val/cls_loss') newData.valClsLoss.push(data[key]);
       }
     });
@@ -623,12 +623,12 @@ const connectWebSocket = () => {
           轮次: data.data?.epoch,
           训练损失: {
             box_loss: data.data?.['train/box_loss'],
-            obj_loss: data.data?.['train/obj_loss'],
+            dfl_loss: data.data?.['train/dfl_loss'],
             cls_loss: data.data?.['train/cls_loss']
           },
           验证损失: {
             box_loss: data.data?.['val/box_loss'],
-            obj_loss: data.data?.['val/obj_loss'],
+            dfl_loss: data.data?.['val/dfl_loss'],
             cls_loss: data.data?.['val/cls_loss']
           },
           评估指标: {
@@ -713,7 +713,7 @@ onUnmounted(() => {
   metricsChart?.dispose();
   boxLossChart?.dispose();
   clsLossChart?.dispose();
-  objLossChart?.dispose();
+  dflLossChart?.dispose();
 });
 </script>
 
@@ -756,7 +756,7 @@ onUnmounted(() => {
           <div ref="clsLossChartRef" style="width: 100%; height: 180px" />
         </div>
         <div style="background: #f8fafb; border-radius: 12px; padding: 16px; height: 250px">
-          <div ref="objLossChartRef" style="width: 100%; height: 180px" />
+          <div ref="dflLossChartRef" style="width: 100%; height: 180px" />
         </div>
       </div>
     </div>
