@@ -618,27 +618,49 @@ const connectWebSocket = () => {
       console.log('WebSocket收到消息, 原始数据:', event.data);
       try {
         const data = JSON.parse(event.data);
-        console.log('收到训练进度更新:', {
-          状态: data.status,
-          轮次: data.data?.epoch,
-          训练损失: {
-            box_loss: data.data?.['train/box_loss'],
-            dfl_loss: data.data?.['train/dfl_loss'],
-            cls_loss: data.data?.['train/cls_loss']
-          },
-          验证损失: {
-            box_loss: data.data?.['val/box_loss'],
-            dfl_loss: data.data?.['val/dfl_loss'],
-            cls_loss: data.data?.['val/cls_loss']
-          },
-          评估指标: {
-            precision: data.data?.['metrics/precision'],
-            recall: data.data?.['metrics/recall'],
-            mAP50: data.data?.['metrics/mAP_0.5'],
-            mAP5095: data.data?.['metrics/mAP_0.5:0.95']
-          }
-        });
-        handleTrainingStatus(data);
+
+        // 根据状态类型进行不同处理
+        if (data.status === 'training') {
+          // 训练中状态的处理逻辑
+          console.log('收到训练进度更新:', {
+            状态: data.status,
+            轮次: data.data?.epoch,
+            训练损失: {
+              box_loss: data.data?.['train/box_loss'],
+              dfl_loss: data.data?.['train/dfl_loss'],
+              cls_loss: data.data?.['train/cls_loss']
+            },
+            验证损失: {
+              box_loss: data.data?.['val/box_loss'],
+              dfl_loss: data.data?.['val/dfl_loss'],
+              cls_loss: data.data?.['val/cls_loss']
+            },
+            评估指标: {
+              precision: data.data?.['metrics/precision'],
+              recall: data.data?.['metrics/recall'],
+              mAP50: data.data?.['metrics/mAP_0.5'],
+              mAP5095: data.data?.['metrics/mAP_0.5:0.95']
+            }
+          });
+          handleTrainingStatus(data);
+        } else if (data.status === 'finished' || data.status === 'early_stop') {
+          // 训练完成或提前停止状态的处理逻辑
+          console.log('收到训练结束消息:', {
+            状态: data.status,
+            模型ID: data.model_id,
+            消息: data.message,
+            最佳模型路径: data.best_model_path
+          });
+
+          // 更新训练状态
+          trainingStatus.value = data.status === 'finished' ? '训练完成' : '训练提前停止';
+
+          // 关闭WebSocket连接
+          ws?.close();
+        } else {
+          // 其他状态直接传递给handleTrainingStatus处理
+          handleTrainingStatus(data);
+        }
       } catch (err) {
         console.error('处理WebSocket消息时出错:', err);
       }
